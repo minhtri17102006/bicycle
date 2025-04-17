@@ -12,11 +12,14 @@
  * Description  : Du an xe dap qua la dep trai cua hmtri va phong:))
  **************************************************************************/
 
+
+
 #include <GL/glut.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
+#include <cstdlib>
 
 #define PI              3.141592653589793
 #define WIN_WIDTH       1200
@@ -124,9 +127,12 @@ void updateScene()
     GLfloat sin_steering, cos_steering;
     const GLfloat DECELERATION = 0.02f;
 
-    if (Abs(speed) > 0.0f && Abs(speed) < INC_SPEED / 10.0f) {
+    if (Abs(speed) > 0.0f && Abs(speed) < INC_SPEED / 10.0f) 
+	{
         speed = 0.0f;
-    } else if (speed != 0.0f) {
+    } 
+	else if (speed != 0.0f) 
+	{
         speed -= (speed > 0.0f ? DECELERATION : -DECELERATION);
         if (Abs(speed) < DECELERATION) speed = 0.0f;
     }
@@ -312,7 +318,8 @@ void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
     glNormal3f(0.0f, 0.0f, 1.0f);
 
     glBegin(GL_QUAD_STRIP);
-    for (i = 0; i <= teeth; i++) {
+    for (i = 0; i <= teeth; i++) 
+	{
         angle = i * 2.0 * PI / teeth;
         glVertex3f(r0 * cos(angle), r0 * sin(angle), width * 0.5f);
         glVertex3f(r1 * cos(angle), r1 * sin(angle), width * 0.5f);
@@ -323,7 +330,8 @@ void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 
     glNormal3f(0.0f, 0.0f, -1.0f);
     glBegin(GL_QUAD_STRIP);
-    for (i = 0; i <= teeth; i++) {
+    for (i = 0; i <= teeth; i++) 
+	{
         angle = i * 2.0 * PI / teeth;
         glVertex3f(r1 * cos(angle), r1 * sin(angle), -width * 0.5f);
         glVertex3f(r0 * cos(angle), r0 * sin(angle), -width * 0.5f);
@@ -333,7 +341,8 @@ void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
     glEnd();
 
     glBegin(GL_QUADS);
-    for (i = 0; i < teeth; i++) {
+    for (i = 0; i < teeth; i++) 
+	{
         angle = i * 2.0 * PI / teeth;
         glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da), -width * 0.5f);
         glVertex3f(r2 * cos(angle + 2 * da), r2 * sin(angle + 2 * da), -width * 0.5f);
@@ -343,7 +352,8 @@ void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
     glEnd();
 
     glBegin(GL_QUAD_STRIP);
-    for (i = 0; i < teeth; i++) {
+    for (i = 0; i < teeth; i++) 
+	{
         angle = i * 2.0 * PI / teeth;
         glVertex3f(r1 * cos(angle), r1 * sin(angle), width * 0.5f);
         glVertex3f(r1 * cos(angle), r1 * sin(angle), -width * 0.5f);
@@ -369,7 +379,8 @@ void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 
     glShadeModel(GL_SMOOTH);
     glBegin(GL_QUAD_STRIP);
-    for (i = 0; i <= teeth; i++) {
+    for (i = 0; i <= teeth; i++) 
+	{
         angle = i * 2.0 * PI / teeth;
         glNormal3f(-cos(angle), -sin(angle), 0.0f);
         glVertex3f(r0 * cos(angle), r0 * sin(angle), -width * 0.5f);
@@ -394,7 +405,8 @@ void drawChain()
     else if (mode == 1 && Abs(speed) > 0) glLineStipple(1, 0x00FF);
 
     glBegin(GL_LINES);
-    for (depth = 0.06f; depth <= 0.12f; depth += 0.01f) {
+    for (depth = 0.06f; depth <= 0.12f; depth += 0.01f) 
+	{
         glVertex3f(-1.6f, 0.15f, ROD_RADIUS);
         glVertex3f(0.0f, 0.3f, depth);
         glVertex3f(-1.6f, -0.15f, ROD_RADIUS);
@@ -507,7 +519,8 @@ void drawTyre(void)
     glPopMatrix();
     glutSolidTorus(0.02f, 0.02f, 3, 20);
     glColor3f(0.8f, 0.6f, 0.5f);
-    for (i = 0; i < NUM_SPOKES; ++i) {
+    for (i = 0; i < NUM_SPOKES; ++i) 
+	{
         glPushMatrix();
             glRotatef(i * SPOKE_ANGLE, 0.0f, 0.0f, 1.0f);
             glBegin(GL_LINES);
@@ -642,9 +655,10 @@ void drawControlsText(void)
     int y = WIN_HEIGHT - 20;
 
     // Array of control strings
-    const char *controls[] = {
+    const char *controls[] = 
+	{
         "Project of: NGUYEN HUU PHONG & HOANG MINH TRI",
-        "R: return",
+        "R: reset",
         "W: Move forward",
         "A: Steer left",
         "S: Move backward",
@@ -659,17 +673,20 @@ void drawControlsText(void)
     sprintf(speedStr, "Speed: %.2f", speed);
 
     // Draw each control label
-    for (int i = 0; i < numControls; i++) {
+    for (int i = 0; i < numControls; i++) 
+	{
         glRasterPos2i(x, y - i * 15); // Move down for each line (15 pixels spacing)
         const char *str = controls[i];
-        for (int j = 0; j < strlen(str); j++) {
+        for (int j = 0; j < strlen(str); j++) 
+		{
             glutBitmapCharacter(font, str[j]);
         }
     }
 
     // Draw the speed label below the controls
     glRasterPos2i(x, y - numControls * 15);
-    for (int j = 0; j < strlen(speedStr); j++) {
+    for (int j = 0; j < strlen(speedStr); j++) 
+	{
         glutBitmapCharacter(font, speedStr[j]);
     }
 
@@ -718,7 +735,8 @@ void landmarks(void)
     GLfloat i;
     glColor3f(0.0f, 1.0f, 0.0f);
     glBegin(GL_LINES);
-    for (i = -100.0f; i <= 100.0f; i += 1.0f) {
+    for (i = -100.0f; i <= 100.0f; i += 1.0f) 
+	{
         glVertex3f(-100.0f, -RADIUS_WHEEL, i);
         glVertex3f(100.0f, -RADIUS_WHEEL, i);
         glVertex3f(i, -RADIUS_WHEEL, -100.0f);
@@ -793,7 +811,8 @@ void idle(void)
  ******************************************/
 void wheelieReset(int value)
 {
-    if (wheelieActive) {
+    if (wheelieActive) 
+	{
         wheelieAngle = 0.0f;
         wheelieActive = 0;
         wheelieTimer = 0;
@@ -805,11 +824,20 @@ void wheelieReset(int value)
  ******************************************/
 void special(int key, int x, int y)
 {
-    switch (key) {
-        case GLUT_KEY_UP: camz -= 0.1f; break;
-        case GLUT_KEY_DOWN: camz += 0.1f; break;
-        case GLUT_KEY_LEFT: camx -= 0.1f; break;
-        case GLUT_KEY_RIGHT: camx += 0.1f; break;
+    switch (key) 
+	{
+        case GLUT_KEY_UP: 
+			camz -= 0.1f; 
+			break;
+        case GLUT_KEY_DOWN: 
+			camz += 0.1f; 
+			break;
+        case GLUT_KEY_LEFT: 
+			camx -= 0.1f; 
+			break;
+        case GLUT_KEY_RIGHT: 
+			camx += 0.1f; 
+			break;
     }
     glutPostRedisplay();
 }
@@ -838,13 +866,17 @@ void reset()
  ******************************************/
 void keyboard(unsigned char key, int x, int y)
 {
-    switch (key) {
+    switch (key) 
+	{
         case 'w':
         case 'W':
             // Set direction to forward (positive speed)
-            if (speed >= 0.0f) {
+            if (speed >= 0.0f) 
+			{
                 speed += INC_SPEED; // Increase speed if already moving forward
-            } else {
+            } 
+			else 
+			{
                 speed = -speed; // Reverse direction if moving backward
                 speed += INC_SPEED; // Then increase speed
             }
@@ -853,9 +885,12 @@ void keyboard(unsigned char key, int x, int y)
         case 's':
         case 'S':
             // Set direction to backward (negative speed)
-            if (speed <= 0.0f) {
+            if (speed <= 0.0f) 
+			{
                 speed -= INC_SPEED; // Decrease speed if already moving backward
-            } else {
+            } 
+			else 
+			{
                 speed = -speed; // Reverse direction if moving forward
                 speed -= INC_SPEED; // Then decrease speed
             }
@@ -871,27 +906,34 @@ void keyboard(unsigned char key, int x, int y)
             break;
         case '+':
             // Increase the absolute speed (go faster) while keeping direction
-            if (speed >= 0.0f) {
+            if (speed >= 0.0f) 
+			{
                 speed += INC_SPEED;
                 if (speed > MAX_SPEED) speed = MAX_SPEED;
-            } else {
+            } 
+			else 
+			{
                 speed -= INC_SPEED; // Speed is negative, so subtract to increase absolute value
                 if (speed < MIN_SPEED) speed = MIN_SPEED;
             }
             break;
         case '-':
             // Decrease the absolute speed (go slower) while keeping direction
-            if (speed >= 0.0f) {
+            if (speed >= 0.0f) 
+			{
                 speed -= INC_SPEED;
                 if (speed < 0.0f) speed = 0.0f; // Don't let it go negative
-            } else {
+            } 
+			else 
+			{
                 speed += INC_SPEED; // Speed is negative, so add to decrease absolute value
                 if (speed > 0.0f) speed = 0.0f; // Don't let it go positive
             }
             break;
         case 'q':
         case 'Q':
-            if (!wheelieActive) {
+            if (!wheelieActive) 
+			{
                 wheelieAngle = WHEELIE_ANGLE; // Set wheelie angle
                 wheelieActive = 1;
                 wheelieTimer = glutGet(GLUT_ELAPSED_TIME);
@@ -914,12 +956,16 @@ void keyboard(unsigned char key, int x, int y)
  ******************************************/
 void mouse(int button, int state, int x, int y)
 {
-    if (button == GLUT_LEFT_BUTTON) {
-        if (state == GLUT_DOWN) {
+    if (button == GLUT_LEFT_BUTTON) 
+	{
+        if (state == GLUT_DOWN) 
+		{
             Mouse = GLUT_DOWN;
             prevx = x;
             prevy = y;
-        } else {
+        } 
+		else 
+		{
             Mouse = GLUT_UP;
         }
     }
@@ -931,7 +977,8 @@ void mouse(int button, int state, int x, int y)
  ******************************************/
 void motion(int x, int y)
 {
-    if (Mouse == GLUT_DOWN) {
+    if (Mouse == GLUT_DOWN) 
+	{
         int deltax = prevx - x;
         int deltay = prevy - y;
         anglex += 0.5f * deltax;
@@ -1020,5 +1067,7 @@ int main(int argc, char *argv[])
     glSetupFuncs();
     help();
     glutMainLoop();
+    
+    system("CLS");
     return 0;
 }
