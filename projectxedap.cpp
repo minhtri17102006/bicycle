@@ -1,7 +1,16 @@
 /**************************************
  * File: cycle_with_person.c
  * Description: Hierarchical 3D Model of a Bicycle with a Person, W,A,S,D, +/- controls, Q for wheelie, with on-screen control labels
- **************************************/
+ **************************************
+ 
+ **************************************************************************
+ *                          PROJECT INFORMATION                           *
+ **************************************************************************
+ * File Name    : projectxadep.cpp
+ * Author       : Hoang Minh Tri - Nguyen Huu Phong
+ * Edited Date  : 17/04/2025
+ * Description  : Du an xe dap qua la dep trai cua hmtri va phong:))
+ **************************************************************************/
 
 #include <GL/glut.h>
 #include <stdio.h>
