@@ -1,18 +1,16 @@
 /**************************************
  * File: cycle_with_person.c
- * Description: Hierarchical 3D Model of a Bicycle with a Person, W,A,S,D, +/- controls, Q for wheelie, with on-screen control labels
+ * Mo ta: Mo hinh 3D xe dap va nguoi, dieu khien bang W,A,S,D, +/-, Q cho wheelie, voi nhan dieu khien tren man hinh
  **************************************
- 
+
  **************************************************************************
- *                          PROJECT INFORMATION                           *
+ *                          THONG TIN DU AN                               *
  **************************************************************************
- * File Name    : projectxadep.cpp
- * Author       : Hoang Minh Tri - Nguyen Huu Phong
- * Edited Date  : 17/04/2025
- * Description  : Du an xe dap qua la dep trai cua hmtri va phong:))
+ * Ten File     : projectxadep.cpp
+ * Tac gia      : Hoang Minh Tri - Nguyen Huu Phong
+ * Ngay sua     : 17/04/2025
+ * Mo ta        : Du an xe dap qua la dep trai cua hmtri va phong:))
  **************************************************************************/
-
-
 
 #include <GL/glut.h>
 #include <stdio.h>
@@ -46,14 +44,14 @@
 #define FRONT_INCLINE   75.0f
 #define HANDLE_LIMIT    70.0f
 #define INC_STEERING    2.0f
-#define INC_SPEED       0.2f
-#define MAX_SPEED       0.2f
-#define MIN_SPEED      -0.2f
-#define WHEELIE_ANGLE   30.0f // Maximum angle for wheelie
-#define WHEELIE_DURATION 1000 // Duration in milliseconds (1 second)
+#define INC_SPEED       0.13f
+#define MAX_SPEED       0.13f
+#define MIN_SPEED      -0.13f
+#define WHEELIE_ANGLE   30.0f
+#define WHEELIE_DURATION 1000
 
 /*****************************************
- * Global Variables
+ * Bien toan cuc
  ****************************************/
 GLfloat pedalAngle, speed, steering;
 GLfloat camx, camy, camz;
@@ -61,11 +59,12 @@ GLfloat anglex, angley, anglez;
 int prevx, prevy;
 GLenum Mouse;
 GLfloat xpos, zpos, direction;
-GLfloat wheelieAngle = 0.0f; // Angle for wheelie effect
-int wheelieActive = 0; // Flag to check if wheelie is active
-int wheelieTimer = 0; // Timer to control wheelie duration
+GLfloat wheelieAngle = 0.0f;
+int wheelieActive = 0;
+int wheelieTimer = 0;
+int autoMove = 0; // Bien kiem tra che do tu dong chay
 
-// Prototype functions
+// Khai bao ham
 void ZCylinder(GLfloat radius, GLfloat length);
 void XCylinder(GLfloat radius, GLfloat length);
 void drawFrame(void);
@@ -76,7 +75,7 @@ void drawPedals(void);
 void drawTyre(void);
 void drawSeat(void);
 void drawPerson(void);
-void drawControlsText(void); // New function for on-screen controls
+void drawControlsText(void);
 void help(void);
 void init(void);
 void reset(void);
@@ -97,7 +96,7 @@ GLfloat angleSum(GLfloat, GLfloat);
 void wheelieReset(int value);
 
 /************************************************
- * Utility function: Draw a cylinder along Z-axis
+ * Ham ve tru truc Z
  ************************************************/
 void ZCylinder(GLfloat radius, GLfloat length)
 {
@@ -107,7 +106,7 @@ void ZCylinder(GLfloat radius, GLfloat length)
 }
 
 /************************************************
- * Utility function: Draw a cylinder along X-axis
+ * Ham ve tru truc X
  ************************************************/
 void XCylinder(GLfloat radius, GLfloat length)
 {
@@ -118,7 +117,7 @@ void XCylinder(GLfloat radius, GLfloat length)
 }
 
 /*******************************************
- * Update scene: Bicycle movement
+ * Cap nhat canh: Di chuyen xe dap
  *******************************************/
 void updateScene()
 {
@@ -127,12 +126,19 @@ void updateScene()
     GLfloat sin_steering, cos_steering;
     const GLfloat DECELERATION = 0.02f;
 
-    if (Abs(speed) > 0.0f && Abs(speed) < INC_SPEED / 10.0f) 
-	{
+    // Tu dong chay neu che do autoMove duoc bat
+    if (autoMove && speed < MAX_SPEED)
+    {
+        speed += INC_SPEED;
+        if (speed > MAX_SPEED) speed = MAX_SPEED;
+    }
+
+    if (Abs(speed) > 0.0f && Abs(speed) < INC_SPEED / 10.0f)
+    {
         speed = 0.0f;
-    } 
-	else if (speed != 0.0f) 
-	{
+    }
+    else if (speed != 0.0f)
+    {
         speed -= (speed > 0.0f ? DECELERATION : -DECELERATION);
         if (Abs(speed) < DECELERATION) speed = 0.0f;
     }
@@ -153,7 +159,7 @@ void updateScene()
 }
 
 /******************************************
- * angleSum: Return a+b mod 2PI
+ * angleSum: Cong hai goc mod 2PI
  ******************************************/
 GLfloat angleSum(GLfloat a, GLfloat b)
 {
@@ -164,55 +170,62 @@ GLfloat angleSum(GLfloat a, GLfloat b)
 }
 
 /************************************************
- * Draw the metal frame of the cycle
+ * Ve khung kim loai cua xe dap
  ************************************************/
 void drawFrame()
 {
     glColor3f(0.4f, 0.0f, 0.0f);
 
     glPushMatrix();
-        // Move to the rear wheel position (pivot point for wheelie)
+    {
+        // Di chuyen den vi tri banh sau (diem xoay cho wheelie)
         glTranslatef(-(BACK_CONNECTOR + RADIUS_WHEEL + TUBE_WIDTH), 0.0f, 0.0f);
-        // Apply wheelie rotation around the X-axis at the rear wheel
+        // Ap dung xoay wheelie quanh truc X tai banh sau
         glRotatef(wheelieAngle, 1.0f, 0.0f, 0.0f);
-        // Translate back to the original position
+        // Tro ve vi tri ban dau
         glTranslatef((BACK_CONNECTOR + RADIUS_WHEEL + TUBE_WIDTH), 0.0f, 0.0f);
 
-        // Gear and pedal connector
+        // Ket noi banh rang va ban dap
         glPushMatrix();
+        {
             glColor3f(0.7f, 0.0f, 0.7f);
             glPushMatrix();
+            {
                 glTranslatef(0.0f, 0.0f, 0.10f);
                 glRotatef(-(pedalAngle + 15.0f), 0.0f, 0.0f, 1.0f);
                 gear(0.08f, 0.3f, 0.03f, 30, 0.03f);
+            }
             glPopMatrix();
             glColor3f(0.4f, 0.0f, 0.0f);
             glTranslatef(0.0f, 0.0f, -0.25f);
             ZCylinder(0.08f, 0.32f);
+        }
         glPopMatrix();
 
-        // Right rod
+        // Thanh ben phai
         glRotatef(RIGHT_ANGLE + 7.0f, 0.0f, 0.0f, 1.0f);
         glScalef(1.0f, 0.8f, 1.0f);
         XCylinder(ROD_RADIUS, RIGHT_ROD);
 
-        // Middle rod
+        // Thanh giua
         glRotatef(MIDDLE_ANGLE - (RIGHT_ANGLE + 7.0f) + 5.0f, 0.0f, 0.0f, 1.0f);
         glScalef(0.9f, 1.1f, 1.0f);
         XCylinder(ROD_RADIUS, MIDDLE_ROD);
 
-        // Seat
+        // Ghe ngoi
         glColor3f(0.1f, 1.0f, 0.3f);
         glTranslatef(MIDDLE_ROD, 0.0f, 0.0f);
         glRotatef(-MIDDLE_ANGLE - 7.0f, 0.0f, 0.0f, 1.0f);
         glScalef(0.6f, ROD_RADIUS * 1.7f, 0.4f);
         drawSeat();
         glColor3f(0.4f, 0.0f, 0.0f);
+    }
     glPopMatrix();
 
-    // Horizontal connector
+    // Thanh noi ngang
     glPushMatrix();
-        // Apply wheelie rotation for this part as well
+    {
+        // Ap dung xoay wheelie cho phan nay
         glTranslatef(-(BACK_CONNECTOR + RADIUS_WHEEL + TUBE_WIDTH), 0.0f, 0.0f);
         glRotatef(wheelieAngle, 1.0f, 0.0f, 0.0f);
         glTranslatef((BACK_CONNECTOR + RADIUS_WHEEL + TUBE_WIDTH), 0.0f, 0.0f);
@@ -220,38 +233,50 @@ void drawFrame()
         glRotatef(-180.0f, 0.0f, 1.0f, 0.0f);
         XCylinder(ROD_RADIUS, BACK_CONNECTOR);
         glPushMatrix();
+        {
             glTranslatef(0.5f, 0.0f, WHEEL_OFFSET);
             XCylinder(ROD_RADIUS, RADIUS_WHEEL + TUBE_WIDTH);
+        }
         glPopMatrix();
         glPushMatrix();
+        {
             glTranslatef(0.5f, 0.0f, -WHEEL_OFFSET);
             XCylinder(ROD_RADIUS, RADIUS_WHEEL + TUBE_WIDTH);
+        }
         glPopMatrix();
+    }
     glPopMatrix();
 
-    // Left rod and wheel
+    // Thanh ben trai va banh xe
     glPushMatrix();
-        // Apply wheelie rotation
+    {
+        // Ap dung xoay wheelie
         glTranslatef(-(BACK_CONNECTOR + RADIUS_WHEEL + TUBE_WIDTH), 0.0f, 0.0f);
         glRotatef(wheelieAngle, 1.0f, 0.0f, 0.0f);
         glTranslatef((BACK_CONNECTOR + RADIUS_WHEEL + TUBE_WIDTH), 0.0f, 0.0f);
 
         glTranslatef(-(BACK_CONNECTOR + RADIUS_WHEEL + TUBE_WIDTH), 0.0f, 0.0f);
         glPushMatrix();
+        {
             glRotatef(-(2 * pedalAngle + 20.0f), 0.0f, 0.0f, 1.0f);
             drawTyre();
             glColor3f(1.0f, 0.3f, 0.0f);
             gear(0.03f, 0.15f, 0.03f, 20, 0.03f);
             glColor3f(0.4f, 0.0f, 0.0f);
+        }
         glPopMatrix();
         glRotatef(LEFT_ANGLE + 10.0f, 0.0f, 0.0f, 1.0f);
         glPushMatrix();
+        {
             glTranslatef(0.0f, 0.0f, -WHEEL_OFFSET);
             XCylinder(ROD_RADIUS, WHEEL_LEN);
+        }
         glPopMatrix();
         glPushMatrix();
+        {
             glTranslatef(0.0f, 0.0f, WHEEL_OFFSET);
             XCylinder(ROD_RADIUS, WHEEL_LEN);
+        }
         glPopMatrix();
         glTranslatef(WHEEL_LEN, 0.0f, 0.0f);
         XCylinder(ROD_RADIUS, CRANK_ROD);
@@ -261,49 +286,66 @@ void drawFrame()
         glTranslatef(TOP_LEN, 0.0f, 0.0f);
         glRotatef(-FRONT_INCLINE - 10.0f, 0.0f, 0.0f, 1.0f);
         glPushMatrix();
+        {
             glTranslatef(-0.1f, 0.0f, 0.0f);
             XCylinder(ROD_RADIUS, 0.45f);
+        }
         glPopMatrix();
         glPushMatrix();
+        {
             glRotatef(-steering * 1.5f, 1.0f, 0.0f, 0.0f);
             glTranslatef(-0.3f, 0.0f, 0.0f);
             glPushMatrix();
+            {
                 glRotatef(FRONT_INCLINE + 15.0f, 0.0f, 0.0f, 1.0f);
                 glPushMatrix();
+                {
                     glTranslatef(0.0f, 0.0f, -HANDLE_ROD / 2);
                     ZCylinder(ROD_RADIUS, HANDLE_ROD);
+                }
                 glPopMatrix();
                 glPushMatrix();
+                {
                     glColor3f(0.0f, 1.0f, 0.9f);
                     glTranslatef(0.0f, 0.0f, -HANDLE_ROD / 2);
                     ZCylinder(0.07f, HANDLE_ROD / 4);
                     glTranslatef(0.0f, 0.0f, HANDLE_ROD * 3 / 4);
                     ZCylinder(0.07f, HANDLE_ROD / 4);
                     glColor3f(0.4f, 0.0f, 0.0f);
+                }
                 glPopMatrix();
+            }
             glPopMatrix();
             glPushMatrix();
+            {
                 XCylinder(ROD_RADIUS, CRANK_ROD);
                 glTranslatef(CRANK_ROD, 0.0f, 0.0f);
                 glRotatef(CRANK_ANGLE + 15.0f, 0.0f, 0.0f, 1.0f);
                 glPushMatrix();
+                {
                     glTranslatef(0.0f, 0.0f, WHEEL_OFFSET);
                     XCylinder(ROD_RADIUS, CRANK_RODS);
+                }
                 glPopMatrix();
                 glPushMatrix();
+                {
                     glTranslatef(0.0f, 0.0f, -WHEEL_OFFSET);
                     XCylinder(ROD_RADIUS, CRANK_RODS);
+                }
                 glPopMatrix();
                 glTranslatef(CRANK_RODS, 0.0f, 0.0f);
                 glRotatef(-2 * pedalAngle - 15.0f, 0.0f, 0.0f, 1.0f);
                 drawTyre();
+            }
             glPopMatrix();
+        }
         glPopMatrix();
+    }
     glPopMatrix();
 }
 
 /********************************************
- * Draw a gear wheel
+ * Ve banh rang
  ********************************************/
 void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
           GLint teeth, GLfloat tooth_depth)
@@ -318,8 +360,8 @@ void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
     glNormal3f(0.0f, 0.0f, 1.0f);
 
     glBegin(GL_QUAD_STRIP);
-    for (i = 0; i <= teeth; i++) 
-	{
+    for (i = 0; i <= teeth; i++)
+    {
         angle = i * 2.0 * PI / teeth;
         glVertex3f(r0 * cos(angle), r0 * sin(angle), width * 0.5f);
         glVertex3f(r1 * cos(angle), r1 * sin(angle), width * 0.5f);
@@ -330,8 +372,8 @@ void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 
     glNormal3f(0.0f, 0.0f, -1.0f);
     glBegin(GL_QUAD_STRIP);
-    for (i = 0; i <= teeth; i++) 
-	{
+    for (i = 0; i <= teeth; i++)
+    {
         angle = i * 2.0 * PI / teeth;
         glVertex3f(r1 * cos(angle), r1 * sin(angle), -width * 0.5f);
         glVertex3f(r0 * cos(angle), r0 * sin(angle), -width * 0.5f);
@@ -341,8 +383,8 @@ void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
     glEnd();
 
     glBegin(GL_QUADS);
-    for (i = 0; i < teeth; i++) 
-	{
+    for (i = 0; i < teeth; i++)
+    {
         angle = i * 2.0 * PI / teeth;
         glVertex3f(r1 * cos(angle + 3 * da), r1 * sin(angle + 3 * da), -width * 0.5f);
         glVertex3f(r2 * cos(angle + 2 * da), r2 * sin(angle + 2 * da), -width * 0.5f);
@@ -352,8 +394,8 @@ void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
     glEnd();
 
     glBegin(GL_QUAD_STRIP);
-    for (i = 0; i < teeth; i++) 
-	{
+    for (i = 0; i < teeth; i++)
+    {
         angle = i * 2.0 * PI / teeth;
         glVertex3f(r1 * cos(angle), r1 * sin(angle), width * 0.5f);
         glVertex3f(r1 * cos(angle), r1 * sin(angle), -width * 0.5f);
@@ -379,8 +421,8 @@ void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 
     glShadeModel(GL_SMOOTH);
     glBegin(GL_QUAD_STRIP);
-    for (i = 0; i <= teeth; i++) 
-	{
+    for (i = 0; i <= teeth; i++)
+    {
         angle = i * 2.0 * PI / teeth;
         glNormal3f(-cos(angle), -sin(angle), 0.0f);
         glVertex3f(r0 * cos(angle), r0 * sin(angle), -width * 0.5f);
@@ -390,7 +432,7 @@ void gear(GLfloat inner_radius, GLfloat outer_radius, GLfloat width,
 }
 
 /******************************************
- * Draw an approximated chain
+ * Ve xich xe dap
  ******************************************/
 void drawChain()
 {
@@ -405,8 +447,8 @@ void drawChain()
     else if (mode == 1 && Abs(speed) > 0) glLineStipple(1, 0x00FF);
 
     glBegin(GL_LINES);
-    for (depth = 0.06f; depth <= 0.12f; depth += 0.01f) 
-	{
+    for (depth = 0.06f; depth <= 0.12f; depth += 0.01f)
+    {
         glVertex3f(-1.6f, 0.15f, ROD_RADIUS);
         glVertex3f(0.0f, 0.3f, depth);
         glVertex3f(-1.6f, -0.15f, ROD_RADIUS);
@@ -417,12 +459,13 @@ void drawChain()
 }
 
 /******************************************
- * Draw the seat
+ * Ve ghe ngoi
  ******************************************/
 void drawSeat()
 {
     glColor3f(1.0f, 1.0f, 0.0f);
     glBegin(GL_POLYGON);
+    {
         glVertex3f(-0.20f, 1.2f, -0.60f);
         glVertex3f(1.2f, 1.0f, -0.40f);
         glVertex3f(1.0f, 1.1f, 0.30f);
@@ -431,10 +474,12 @@ void drawSeat()
         glVertex3f(-1.2f, 1.1f, 1.2f);
         glVertex3f(-1.2f, 1.0f, -1.2f);
         glVertex3f(-0.70f, 1.0f, -1.2f);
+    }
     glEnd();
 
     glColor3f(0.0f, 1.0f, 1.0f);
     glBegin(GL_POLYGON);
+    {
         glVertex3f(-0.20f, -1.2f, -0.60f);
         glVertex3f(1.2f, -1.0f, -0.40f);
         glVertex3f(1.0f, -1.1f, 0.30f);
@@ -443,9 +488,11 @@ void drawSeat()
         glVertex3f(-1.2f, -1.1f, 1.2f);
         glVertex3f(-1.2f, -1.0f, -1.2f);
         glVertex3f(-0.70f, -1.0f, -1.2f);
+    }
     glEnd();
 
     glBegin(GL_QUADS);
+    {
         glVertex3f(1.2f, 1.0f, -0.40f); glVertex3f(1.2f, 1.0f, 0.30f);
         glVertex3f(1.2f, -1.0f, 0.30f); glVertex3f(1.2f, -1.0f, -0.40f);
         glVertex3f(1.2f, 1.0f, 0.30f); glVertex3f(-0.20f, 1.3f, 0.70f);
@@ -460,52 +507,65 @@ void drawSeat()
         glVertex3f(-1.2f, -1.0f, 1.2f); glVertex3f(-0.70f, -1.0f, 1.2f);
         glVertex3f(-0.70f, 1.0f, -1.2f); glVertex3f(-1.2f, 1.0f, -1.2f);
         glVertex3f(-1.2f, -1.0f, -1.2f); glVertex3f(-1.2f, -1.0f, 1.2f);
+    }
     glEnd();
 }
 
 /******************************************
- * Draw the pedals
+ * Ve ban dap
  ******************************************/
 void drawPedals()
 {
     glColor3f(0.25f, 0.15f, 0.1f);
     glPushMatrix();
+    {
         glTranslatef(0.0f, 0.0f, 0.105f);
         glRotatef(-pedalAngle, 0.0f, 0.0f, 1.0f);
         glTranslatef(0.25f, 0.0f, 0.0f);
         glPushMatrix();
+        {
             glScalef(0.5f, 0.1f, 0.1f);
             glutSolidCube(1.0f);
+        }
         glPopMatrix();
         glPushMatrix();
+        {
             glTranslatef(0.25f, 0.0f, 0.15f);
             glRotatef(pedalAngle, 0.0f, 0.0f, 1.0f);
             glScalef(0.2f, 0.02f, 0.3f);
             glutSolidCube(1.0f);
+        }
         glPopMatrix();
+    }
     glPopMatrix();
 
     glPushMatrix();
+    {
         glTranslatef(0.0f, 0.0f, -0.105f);
         glRotatef(180.0f - pedalAngle, 0.0f, 0.0f, 1.0f);
         glTranslatef(0.25f, 0.0f, 0.0f);
         glPushMatrix();
+        {
             glScalef(0.5f, 0.1f, 0.1f);
             glutSolidCube(1.0f);
+        }
         glPopMatrix();
         glPushMatrix();
+        {
             glTranslatef(0.25f, 0.0f, -0.15f);
             glRotatef(pedalAngle - 180.0f, 0.0f, 0.0f, 1.0f);
             glScalef(0.2f, 0.02f, 0.3f);
             glutSolidCube(1.0f);
+        }
         glPopMatrix();
+    }
     glPopMatrix();
 
     glColor3f(0.4f, 0.0f, 0.0f);
 }
 
 /******************************************
- * Draw a tyre
+ * Ve lop xe
  ******************************************/
 void drawTyre(void)
 {
@@ -514,19 +574,25 @@ void drawTyre(void)
     glutSolidTorus(0.06f, 0.92f, 4, 30);
     glColor3f(1.0f, 1.0f, 0.5f);
     glPushMatrix();
+    {
         glTranslatef(0.0f, 0.0f, -0.06f);
         ZCylinder(0.02f, 0.12f);
+    }
     glPopMatrix();
     glutSolidTorus(0.02f, 0.02f, 3, 20);
     glColor3f(0.8f, 0.6f, 0.5f);
-    for (i = 0; i < NUM_SPOKES; ++i) 
-	{
+    for (i = 0; i < NUM_SPOKES; ++i)
+    {
         glPushMatrix();
+        {
             glRotatef(i * SPOKE_ANGLE, 0.0f, 0.0f, 1.0f);
             glBegin(GL_LINES);
+            {
                 glVertex3f(0.0f, 0.02f, 0.0f);
                 glVertex3f(0.0f, 0.86f, 0.0f);
+            }
             glEnd();
+        }
         glPopMatrix();
     }
     glColor3f(0.0f, 0.0f, 0.0f);
@@ -535,106 +601,117 @@ void drawTyre(void)
 }
 
 /******************************************
- * Draw the person on the bicycle
+ * Ve nguoi tren xe dap
  ******************************************/
 void drawPerson(void)
 {
-    glColor3f(0.8f, 0.6f, 0.4f); // Skin-like color for body parts
+    glColor3f(0.8f, 0.6f, 0.4f);
 
-    // Position the person at the seat (adjust based on seat transformations)
     glPushMatrix();
-        // Translate to seat position (approximated from drawFrame)
-        glTranslatef(-0.2f, 0.3f, 0.0f); // Slight offset above seat
-        // Adjust person's lean based on wheelie
-        glRotatef(-10.0f + wheelieAngle * 0.5f, 0.0f, 0.0f, 1.0f); // Lean forward slightly, adjust with wheelie
+    {
+        glTranslatef(-0.2f, 0.3f, 0.0f);
+        glRotatef(-10.0f + wheelieAngle * 0.5f, 0.0f, 0.0f, 1.0f);
 
-        // Torso (cylinder along Y-axis)
         glPushMatrix();
-            glRotatef(90.0f, 1.0f, 0.0f, 0.0f); // Align along Y
-            ZCylinder(0.15f, 0.6f); // Torso: 0.6 units long
+        {
+            glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+            ZCylinder(0.15f, 0.6f);
+        }
         glPopMatrix();
 
-        // Head (sphere above torso)
         glPushMatrix();
+        {
             glTranslatef(0.0f, 0.7f, 0.0f);
             glutSolidSphere(0.1f, 10, 10);
+        }
         glPopMatrix();
 
-        // Left Arm (upper and lower arm with elbow bend)
         glPushMatrix();
-            glTranslatef(0.2f, 0.5f, 0.0f); // Shoulder position
-            glRotatef(-45.0f + wheelieAngle * 0.3f, 0.0f, 0.0f, 1.0f); // Angle toward handlebar, adjust with wheelie
-            // Upper arm
-            glPushMatrix();
-                ZCylinder(0.05f, 0.3f);
-            glPopMatrix();
-            // Lower arm
-            glPushMatrix();
-                glTranslatef(0.0f, 0.0f, 0.3f);
-                glRotatef(-30.0f, 0.0f, 0.0f, 1.0f); // Elbow bend
-                ZCylinder(0.05f, 0.3f);
-            glPopMatrix();
-        glPopMatrix();
-
-        // Right Arm (symmetric to left)
-        glPushMatrix();
-            glTranslatef(-0.2f, 0.5f, 0.0f);
+        {
+            glTranslatef(0.2f, 0.5f, 0.0f);
             glRotatef(-45.0f + wheelieAngle * 0.3f, 0.0f, 0.0f, 1.0f);
-            // Upper arm
             glPushMatrix();
+            {
                 ZCylinder(0.05f, 0.3f);
+            }
             glPopMatrix();
-            // Lower arm
             glPushMatrix();
+            {
                 glTranslatef(0.0f, 0.0f, 0.3f);
                 glRotatef(-30.0f, 0.0f, 0.0f, 1.0f);
                 ZCylinder(0.05f, 0.3f);
+            }
             glPopMatrix();
+        }
         glPopMatrix();
 
-        // Left Leg (upper and lower leg synchronized with pedal)
         glPushMatrix();
-            glTranslatef(0.1f, 0.0f, 0.105f); // Hip position, aligned with pedal
-            glRotatef(-pedalAngle - 90.0f, 0.0f, 0.0f, 1.0f); // Sync with pedal
-            // Upper leg (thigh)
+        {
+            glTranslatef(-0.2f, 0.5f, 0.0f);
+            glRotatef(-45.0f + wheelieAngle * 0.3f, 0.0f, 0.0f, 1.0f);
             glPushMatrix();
-                ZCylinder(0.07f, 0.4f);
+            {
+                ZCylinder(0.05f, 0.3f);
+            }
             glPopMatrix();
-            // Lower leg (calf)
             glPushMatrix();
+            {
+                glTranslatef(0.0f, 0.0f, 0.3f);
+                glRotatef(-30.0f, 0.0f, 0.0f, 1.0f);
+                ZCylinder(0.05f, 0.3f);
+            }
+            glPopMatrix();
+        }
+        glPopMatrix();
+
+        glPushMatrix();
+        {
+            glTranslatef(0.1f, 0.0f, 0.105f);
+            glRotatef(-pedalAngle - 90.0f, 0.0f, 0.0f, 1.0f);
+            glPushMatrix();
+            {
+                ZCylinder(0.07f, 0.4f);
+            }
+            glPopMatrix();
+            glPushMatrix();
+            {
                 glTranslatef(0.0f, 0.0f, 0.4f);
-                glRotatef(60.0f * sin(radians(pedalAngle)) + 30.0f, 0.0f, 0.0f, 1.0f); // Knee bend
+                glRotatef(60.0f * sin(radians(pedalAngle)) + 30.0f, 0.0f, 0.0f, 1.0f);
                 ZCylinder(0.07f, 0.4f);
+            }
             glPopMatrix();
+        }
         glPopMatrix();
 
-        // Right Leg (opposite phase)
         glPushMatrix();
+        {
             glTranslatef(-0.1f, 0.0f, -0.105f);
             glRotatef(180.0f - pedalAngle - 90.0f, 0.0f, 0.0f, 1.0f);
-            // Upper leg
             glPushMatrix();
+            {
                 ZCylinder(0.07f, 0.4f);
+            }
             glPopMatrix();
-            // Lower leg
             glPushMatrix();
+            {
                 glTranslatef(0.0f, 0.0f, 0.4f);
                 glRotatef(60.0f * sin(radians(pedalAngle + 180.0f)) + 30.0f, 0.0f, 0.0f, 1.0f);
                 ZCylinder(0.07f, 0.4f);
+            }
             glPopMatrix();
+        }
         glPopMatrix();
-
+    }
     glPopMatrix();
 
-    glColor3f(0.4f, 0.0f, 0.0f); // Restore frame color
+    glColor3f(0.4f, 0.0f, 0.0f);
 }
 
 /******************************************
- * Draw on-screen control labels
+ * Ve nhan dieu khien tren man hinh
  ******************************************/
 void drawControlsText(void)
 {
-    // Switch to 2D orthographic projection for text rendering
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -643,54 +720,48 @@ void drawControlsText(void)
     glPushMatrix();
     glLoadIdentity();
 
-    // Disable lighting and depth test for 2D text
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
 
-    // Set text color to yellow
-    glColor3f(1.0f, 1.0f, 0.0f); // Yellow color
+    glColor3f(1.0f, 1.0f, 0.0f);
 
-    // Define starting position for text (top-left corner with padding)
     int x = 10;
     int y = WIN_HEIGHT - 20;
 
-    // Array of control strings
-    const char *controls[] = 
-	{
-        "Project of: NGUYEN HUU PHONG & HOANG MINH TRI",
-        "R: reset",
-        "W: Move forward",
-        "A: Steer left",
-        "S: Move backward",
-        "D: Steer right",
-
+    const char *controls[] =
+    {
+        "Project made by: NGUYEN HUU PHONG & HOANG MINH TRI",
+        "R: Dat lai",
+        "W: Di toi",
+        "A: Re trai",
+        "S: Lui lai",
+        "D: Re phai",
+        "L: Tu dong chay",
+        "K: Dung lai",
+        "Esc: thoat chuong trinh"
     };
     int numControls = sizeof(controls) / sizeof(controls[0]);
     void *font = GLUT_BITMAP_HELVETICA_12;
 
-    // Buffer to store the speed string
     char speedStr[32];
-    sprintf(speedStr, "Speed: %.2f", speed);
+    sprintf(speedStr, "Toc do: %.2f", speed);
 
-    // Draw each control label
-    for (int i = 0; i < numControls; i++) 
-	{
-        glRasterPos2i(x, y - i * 15); // Move down for each line (15 pixels spacing)
+    for (int i = 0; i < numControls; i++)
+    {
+        glRasterPos2i(x, y - i * 15);
         const char *str = controls[i];
-        for (int j = 0; j < strlen(str); j++) 
-		{
+        for (int j = 0; j < strlen(str); j++)
+        {
             glutBitmapCharacter(font, str[j]);
         }
     }
 
-    // Draw the speed label below the controls
     glRasterPos2i(x, y - numControls * 15);
-    for (int j = 0; j < strlen(speedStr); j++) 
-	{
+    for (int j = 0; j < strlen(speedStr); j++)
+    {
         glutBitmapCharacter(font, speedStr[j]);
     }
 
-    // Restore 3D rendering settings
     glEnable(GL_LIGHTING);
     glEnable(GL_DEPTH_TEST);
 
@@ -701,7 +772,7 @@ void drawControlsText(void)
 }
 
 /******************************************
- * Initialize OpenGL settings
+ * Khoi tao OpenGL
  ******************************************/
 void init()
 {
@@ -728,15 +799,15 @@ void init()
 }
 
 /******************************************
- * Draw ground grid
+ * Ve luoi mat dat
  ******************************************/
 void landmarks(void)
 {
     GLfloat i;
     glColor3f(0.0f, 1.0f, 0.0f);
     glBegin(GL_LINES);
-    for (i = -100.0f; i <= 100.0f; i += 1.0f) 
-	{
+    for (i = -100.0f; i <= 100.0f; i += 1.0f)
+    {
         glVertex3f(-100.0f, -RADIUS_WHEEL, i);
         glVertex3f(100.0f, -RADIUS_WHEEL, i);
         glVertex3f(i, -RADIUS_WHEEL, -100.0f);
@@ -746,7 +817,7 @@ void landmarks(void)
 }
 
 /******************************************
- * Display function
+ * Ham hien thi
  ******************************************/
 void display(void)
 {
@@ -757,6 +828,7 @@ void display(void)
     gluLookAt(camx, camy, camz, xpos, 0.0f, zpos, 0.0f, 1.0f, 0.0f);
 
     glPushMatrix();
+    {
         glRotatef(angley, 1.0f, 0.0f, 0.0f);
         glRotatef(anglex, 0.0f, 1.0f, 0.0f);
         glRotatef(anglez, 0.0f, 0.0f, 1.0f);
@@ -764,23 +836,25 @@ void display(void)
         landmarks();
 
         glPushMatrix();
+        {
             glTranslatef(xpos, 0.0f, zpos);
             glRotatef(direction, 0.0f, 1.0f, 0.0f);
             drawFrame();
             drawChain();
             drawPedals();
             drawPerson();
+        }
         glPopMatrix();
+    }
     glPopMatrix();
 
-    // Draw the on-screen control labels
     drawControlsText();
 
     glutSwapBuffers();
 }
 
 /******************************************
- * Utility functions
+ * Ham tien ich
  ******************************************/
 GLfloat Abs(GLfloat a)
 {
@@ -798,7 +872,7 @@ GLfloat radians(GLfloat a)
 }
 
 /******************************************
- * Idle function
+ * Ham idle
  ******************************************/
 void idle(void)
 {
@@ -807,12 +881,12 @@ void idle(void)
 }
 
 /******************************************
- * Timer function to reset wheelie
+ * Ham dat lai wheelie
  ******************************************/
 void wheelieReset(int value)
 {
-    if (wheelieActive) 
-	{
+    if (wheelieActive)
+    {
         wheelieAngle = 0.0f;
         wheelieActive = 0;
         wheelieTimer = 0;
@@ -820,30 +894,30 @@ void wheelieReset(int value)
 }
 
 /******************************************
- * Special key handler
+ * Xu ly phim dac biet
  ******************************************/
 void special(int key, int x, int y)
 {
-    switch (key) 
-	{
-        case GLUT_KEY_UP: 
-			camz -= 0.1f; 
-			break;
-        case GLUT_KEY_DOWN: 
-			camz += 0.1f; 
-			break;
-        case GLUT_KEY_LEFT: 
-			camx -= 0.1f; 
-			break;
-        case GLUT_KEY_RIGHT: 
-			camx += 0.1f; 
-			break;
+    switch (key)
+    {
+        case GLUT_KEY_UP:
+            camz -= 0.1f;
+            break;
+        case GLUT_KEY_DOWN:
+            camz += 0.1f;
+            break;
+        case GLUT_KEY_LEFT:
+            camx -= 0.1f;
+            break;
+        case GLUT_KEY_RIGHT:
+            camx += 0.1f;
+            break;
     }
     glutPostRedisplay();
 }
 
 /******************************************
- * Reset scene
+ * Dat lai canh
  ******************************************/
 void reset()
 {
@@ -859,42 +933,43 @@ void reset()
     wheelieAngle = 0.0f;
     wheelieActive = 0;
     wheelieTimer = 0;
+    autoMove = 0;
 }
 
 /******************************************
- * Keyboard handler
+ * Xu ly ban phim
  ******************************************/
 void keyboard(unsigned char key, int x, int y)
 {
-    switch (key) 
-	{
+    switch (key)
+    {
         case 'w':
         case 'W':
-            // Set direction to forward (positive speed)
-            if (speed >= 0.0f) 
-			{
-                speed += INC_SPEED; // Increase speed if already moving forward
-            } 
-			else 
-			{
-                speed = -speed; // Reverse direction if moving backward
-                speed += INC_SPEED; // Then increase speed
+            if (speed >= 0.0f)
+            {
+                speed += INC_SPEED;
+            }
+            else
+            {
+                speed = -speed;
+                speed += INC_SPEED;
             }
             if (speed > MAX_SPEED) speed = MAX_SPEED;
+            autoMove = 0;
             break;
         case 's':
         case 'S':
-            // Set direction to backward (negative speed)
-            if (speed <= 0.0f) 
-			{
-                speed -= INC_SPEED; // Decrease speed if already moving backward
-            } 
-			else 
-			{
-                speed = -speed; // Reverse direction if moving forward
-                speed -= INC_SPEED; // Then decrease speed
+            if (speed <= 0.0f)
+            {
+                speed -= INC_SPEED;
+            }
+            else
+            {
+                speed = -speed;
+                speed -= INC_SPEED;
             }
             if (speed < MIN_SPEED) speed = MIN_SPEED;
+            autoMove = 0;
             break;
         case 'a':
         case 'A':
@@ -905,40 +980,49 @@ void keyboard(unsigned char key, int x, int y)
             if (steering > -HANDLE_LIMIT) steering -= INC_STEERING;
             break;
         case '+':
-            // Increase the absolute speed (go faster) while keeping direction
-            if (speed >= 0.0f) 
-			{
+            if (speed >= 0.0f)
+            {
                 speed += INC_SPEED;
                 if (speed > MAX_SPEED) speed = MAX_SPEED;
-            } 
-			else 
-			{
-                speed -= INC_SPEED; // Speed is negative, so subtract to increase absolute value
+            }
+            else
+            {
+                speed -= INC_SPEED;
                 if (speed < MIN_SPEED) speed = MIN_SPEED;
             }
+            autoMove = 0;
             break;
         case '-':
-            // Decrease the absolute speed (go slower) while keeping direction
-            if (speed >= 0.0f) 
-			{
+            if (speed >= 0.0f)
+            {
                 speed -= INC_SPEED;
-                if (speed < 0.0f) speed = 0.0f; // Don't let it go negative
-            } 
-			else 
-			{
-                speed += INC_SPEED; // Speed is negative, so add to decrease absolute value
-                if (speed > 0.0f) speed = 0.0f; // Don't let it go positive
+                if (speed < 0.0f) speed = 0.0f;
             }
+            else
+            {
+                speed += INC_SPEED;
+                if (speed > 0.0f) speed = 0.0f;
+            }
+            autoMove = 0;
             break;
         case 'q':
         case 'Q':
-            if (!wheelieActive) 
-			{
-                wheelieAngle = WHEELIE_ANGLE; // Set wheelie angle
+            if (!wheelieActive)
+            {
+                wheelieAngle = WHEELIE_ANGLE;
                 wheelieActive = 1;
                 wheelieTimer = glutGet(GLUT_ELAPSED_TIME);
-                glutTimerFunc(WHEELIE_DURATION, wheelieReset, 0); // Reset after duration
+                glutTimerFunc(WHEELIE_DURATION, wheelieReset, 0);
             }
+            break;
+        case 'l':
+        case 'L':
+            autoMove = 1;
+            break;
+        case 'k':
+        case 'K':
+            autoMove = 0;
+            speed = 0.0f;
             break;
         case 'r':
         case 'R':
@@ -952,20 +1036,20 @@ void keyboard(unsigned char key, int x, int y)
 }
 
 /******************************************
- * Mouse handler
+ * Xu ly chuot
  ******************************************/
 void mouse(int button, int state, int x, int y)
 {
-    if (button == GLUT_LEFT_BUTTON) 
-	{
-        if (state == GLUT_DOWN) 
-		{
+    if (button == GLUT_LEFT_BUTTON)
+    {
+        if (state == GLUT_DOWN)
+        {
             Mouse = GLUT_DOWN;
             prevx = x;
             prevy = y;
-        } 
-		else 
-		{
+        }
+        else
+        {
             Mouse = GLUT_UP;
         }
     }
@@ -973,12 +1057,12 @@ void mouse(int button, int state, int x, int y)
 }
 
 /******************************************
- * Motion handler
+ * Xu ly chuyen dong chuot
  ******************************************/
 void motion(int x, int y)
 {
-    if (Mouse == GLUT_DOWN) 
-	{
+    if (Mouse == GLUT_DOWN)
+    {
         int deltax = prevx - x;
         int deltay = prevy - y;
         anglex += 0.5f * deltax;
@@ -999,14 +1083,14 @@ void motion(int x, int y)
 }
 
 /******************************************
- * Passive motion handler
+ * Xu ly chuot thu dong
  ******************************************/
 void passive(int x, int y)
 {
 }
 
 /******************************************
- * Reshape handler
+ * Thay doi kich thuoc cua so
  ******************************************/
 void reshape(int w, int h)
 {
@@ -1018,7 +1102,7 @@ void reshape(int w, int h)
 }
 
 /******************************************
- * Setup GLUT callbacks
+ * Cai dat ham goi lai GLUT
  ******************************************/
 void glSetupFuncs(void)
 {
@@ -1034,27 +1118,24 @@ void glSetupFuncs(void)
 }
 
 /******************************************
- * Help text
+ * Hien thi huong dan
  ******************************************/
 void help(void)
 {
-    printf("Hierarchical 3D Model of a Bicycle with a Person\n");
-    printf("Controls:\n");
-    printf("  W: Move forward\n");
-    printf("  S: Move backward\n");
-    printf("  A: Steer left\n");
-    printf("  D: Steer right\n");
-    printf("  +: Increase speed\n");
-    printf("  -: Decrease speed\n");
-    printf("  Q: Perform wheelie\n");
-    printf("  R: Reset scene\n");
-    printf("  Arrow keys: Move camera\n");
-    printf("  Mouse drag: Rotate scene\n");
-    printf("  ESC: Exit\n");
+    printf("Mo hinh 3D xe dap va nguoi\n");
+    printf("Dieu khien:\n");
+    printf("  W: Di toi\n");
+    printf("  S: Lui lai\n");
+    printf("  A: Re trai\n");
+    printf("  D: Re phai\n");
+    printf("  L: Tu dong chay\n");
+    printf("  K: Dung lai\n");
+    printf("  R: Dat lai\n");
+    printf("  ESC: Thoat\n");
 }
 
 /******************************************
- * Main function
+ * Ham chinh
  ******************************************/
 int main(int argc, char *argv[])
 {
@@ -1062,12 +1143,12 @@ int main(int argc, char *argv[])
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
     glutInitWindowPosition(100, 100);
     glutInitWindowSize(WIN_WIDTH, WIN_HEIGHT);
-    glutCreateWindow("Bicycle with Person - 3D Model with Controls");
+    glutCreateWindow("Xe dap voi nguoi - Mo hinh 3D voi dieu khien");
     init();
     glSetupFuncs();
     help();
     glutMainLoop();
-    
+
     system("CLS");
     return 0;
 }
